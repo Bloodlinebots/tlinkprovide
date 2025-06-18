@@ -1,0 +1,42 @@
+{
+  "name": "Hybrid TeraBox Bot",
+  "description": "Telegram bot that provides unique TeraBox links using a hybrid storage system (MongoDB + .txt file) with no repetition.",
+  "repository": "https://github.com/your-username/hybrid-terabox-bot",
+  "logo": "https://i.imgur.com/8Pq0P4O.png",
+  "keywords": ["telegram", "bot", "terabox", "pyrogram", "mongodb", "hybrid"],
+  "env": {
+    "API_ID": {
+      "description": "Get your API_ID from https://my.telegram.org",
+      "required": true
+    },
+    "API_HASH": {
+      "description": "Get your API_HASH from https://my.telegram.org",
+      "required": true
+    },
+    "BOT_TOKEN": {
+      "description": "Telegram Bot Token from @BotFather",
+      "required": true
+    },
+    "MONGO_URI": {
+      "description": "Your MongoDB connection URI (from MongoDB Atlas or local instance)",
+      "required": true
+    },
+    "ADMIN_IDS": {
+      "description": "Space-separated list of Telegram user IDs who are admins",
+      "required": true
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "worker": {
+      "quantity": 1,
+      "size": "basic"  #👈 Use “free” if you're using Railway or similar
+    }
+  },
+  "addons": [],
+  "stack": "heroku-22"
+}

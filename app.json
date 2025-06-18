@@ -1,29 +1,28 @@
 {
-  "name": "Hybrid TeraBox Bot",
-  "description": "Telegram bot that provides unique TeraBox links using MongoDB and .txt file hybrid system.",
-  "repository": "https://github.com/your-username/hybrid-terabox-bot",
-  "logo": "https://i.imgur.com/8Pq0P4O.png",
-  "keywords": ["telegram", "bot", "terabox", "pyrogram", "mongodb", "hybrid"],
+  "name": "Terabox Link Share Bot",
+  "description": "A Telegram bot that shares unique terabox.com links to users without repetition.",
+  "repository": "https://github.com/yourusername/your-repo",
+  "keywords": ["telegram", "bot", "terabox", "pyrogram", "mongodb"],
   "env": {
     "API_ID": {
       "description": "Your Telegram API ID from https://my.telegram.org",
-      "required": true
+      "value": "14050586"
     },
     "API_HASH": {
-      "description": "Your Telegram API HASH from https://my.telegram.org",
-      "required": true
+      "description": "Your Telegram API Hash from https://my.telegram.org",
+      "value": "42a60d9c657b106370c79bb0a8ac560c"
     },
     "BOT_TOKEN": {
-      "description": "Bot token from @BotFather",
+      "description": "Telegram bot token from @BotFather",
       "required": true
     },
     "MONGO_URI": {
-      "description": "MongoDB connection string (from MongoDB Atlas)",
+      "description": "MongoDB URI from MongoDB Atlas or local",
       "required": true
     },
     "ADMIN_IDS": {
-      "description": "Space-separated Telegram user IDs of admins",
-      "required": true
+      "description": "Space-separated Telegram user IDs with admin access",
+      "value": "7755789304"
     }
   },
   "buildpacks": [
@@ -37,6 +36,5 @@
       "size": "basic"
     }
   },
-  "addons": [],
   "stack": "heroku-22"
 }

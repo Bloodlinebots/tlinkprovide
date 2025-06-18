@@ -12,6 +12,9 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 MONGO_URI = os.getenv("MONGO_URI")
 ADMIN_IDS = [int(i) for i in os.getenv("ADMIN_IDS", "").split()]
 
+if not ADMIN_IDS:
+    print("⚠️ WARNING: No ADMIN_IDS set. No one can upload or view stats.")
+
 # MongoDB setup
 mongo = MongoClient(MONGO_URI)
 db = mongo["linkbot"]
@@ -25,8 +28,11 @@ app = Client("hybrid-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN
 
 # Utils
 def load_links():
-    with open(LINK_FILE, "r") as f:
-        return [line.strip() for line in f if line.strip()]
+    try:
+        with open(LINK_FILE, "r") as f:
+            return [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        return []
 
 def save_links(new_links):
     existing = set(load_links())
@@ -36,18 +42,19 @@ def save_links(new_links):
             f.write("\n".join(combined))
 
 def get_unique_link(user_id):
-    all_links = load_links()
-    data = users.find_one({"user_id": user_id})
-    assigned = data.get("links_assigned", []) if data else []
+    with FileLock(LOCK_FILE):
+        all_links = load_links()
+        data = users.find_one({"user_id": user_id})
+        assigned = data.get("links_assigned", []) if data else []
 
-    for link in all_links:
-        if link not in assigned:
-            users.update_one(
-                {"user_id": user_id},
-                {"$addToSet": {"links_assigned": link}, "$set": {"last_assigned": time.time()}},
-                upsert=True,
-            )
-            return link
+        for link in all_links:
+            if link not in assigned:
+                users.update_one(
+                    {"user_id": user_id},
+                    {"$addToSet": {"links_assigned": link}, "$set": {"last_assigned": time.time()}},
+                    upsert=True,
+                )
+                return link
     return None
 
 # Commands
@@ -61,8 +68,7 @@ async def start(client, message):
 @app.on_callback_query(filters.regex("get_link"))
 async def send_link(client, callback):
     user_id = callback.from_user.id
-    with FileLock(LOCK_FILE):
-        link = get_unique_link(user_id)
+    link = get_unique_link(user_id)
     if link:
         await callback.message.edit_text(f"Here's your unique link:\n{link}")
     else:
@@ -77,6 +83,7 @@ async def upload_links(client, message):
     with open(path, "r") as src:
         links = [line.strip() for line in src if line.strip().startswith("https://terabox.com/s/")]
     save_links(links)
+    os.remove(path)
     await message.reply(f"✅ Uploaded {len(links)} new links.")
 
 @app.on_message(filters.command("stats") & filters.user(ADMIN_IDS))
@@ -101,7 +108,7 @@ async def my_links(client, message):
 
 @app.on_message(filters.text & filters.user(ADMIN_IDS))
 async def handle_text_links(client, message):
-    links = re.findall(r"https://terabox\.com/s/\S+", message.text)
+    links = re.findall(r"https://terabox\.com/s/[^\s]+", message.text)
     if links:
         save_links(links)
         await message.reply(f"✅ Added {len(links)} new link(s) from your message.")
@@ -113,6 +120,7 @@ async def handle_txt_upload(client, message):
         with open(path, "r") as f:
             links = [line.strip() for line in f if line.strip().startswith("https://terabox.com/s/")]
         save_links(links)
+        os.remove(path)
         await message.reply(f"✅ Uploaded {len(links)} new link(s) from file.")
 
 @app.on_message(filters.command("export") & filters.user(ADMIN_IDS))

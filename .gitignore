@@ -1,0 +1,7 @@
+# Python
+__pycache__/
+*.pyc
+.env
+links_pool.txt      # optional: if you don’t wanna push live links
+# OS
+.DS_Store

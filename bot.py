@@ -26,6 +26,13 @@ LOCK_FILE = "links_pool.txt.lock"
 
 app = Client("hybrid-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
+# ✅ Safe link extractor
+def extract_links_from_text(text):
+    return re.findall(
+        r"https://(?:www\.)?(?:terabox\.com|teraboxlink\.com|1024tera\.com|tbxcdn\.com|teraboxapp\.com)/s/[^\s]+",
+        text
+    )
+
 # Utils
 def load_links():
     try:
@@ -61,30 +68,52 @@ def get_unique_link(user_id):
 @app.on_message(filters.command("start"))
 async def start(client, message):
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔗 Get Link", callback_data="get_link")]
+        [InlineKeyboardButton("🔗 Get My Link", callback_data="get_link")]
     ])
-    await message.reply("Welcome! Tap to get your link:", reply_markup=keyboard)
+    await message.reply(
+        "**👋 Welcome to Terabox Link Distributor Bot!**\n\nClick the button below to receive a unique cloud storage link. If you're an admin, you can also upload and manage link pools.\n\n⚠️ Make sure to use responsibly.",
+        reply_markup=keyboard
+    )
 
 @app.on_callback_query(filters.regex("get_link"))
 async def send_link(client, callback):
     user_id = callback.from_user.id
     link = get_unique_link(user_id)
     if link:
-        await callback.message.edit_text(f"Here's your unique link:\n{link}")
+        await callback.message.edit_text(f"✅ Here's your unique link:\n{link}")
     else:
-        await callback.message.edit_text("You've received all available links. Please wait for admin to upload more.")
+        await callback.message.edit_text("⚠️ You've received all available links. Please wait for admin to upload more.")
 
 @app.on_message(filters.command("upload") & filters.user(ADMIN_IDS))
 async def upload_links(client, message):
     if not message.reply_to_message or not message.reply_to_message.document:
-        return await message.reply("Reply to a .txt file to upload links.")
+        return await message.reply("⚠️ Reply to a .txt file to upload links.")
 
     path = await message.reply_to_message.download()
-    with open(path, "r") as src:
-        links = [line.strip() for line in src if line.strip().startswith("https://terabox.com/s/")]
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+    links = extract_links_from_text(content)
     save_links(links)
     os.remove(path)
-    await message.reply(f"✅ Uploaded {len(links)} new links.")
+    await message.reply(f"✅ Uploaded {len(links)} new link(s).")
+
+@app.on_message(filters.text & filters.user(ADMIN_IDS))
+async def handle_text_links(client, message):
+    links = extract_links_from_text(message.text)
+    if links:
+        save_links(links)
+        await message.reply(f"✅ Added {len(links)} new link(s) from your message.")
+
+@app.on_message(filters.document & filters.user(ADMIN_IDS))
+async def handle_txt_upload(client, message):
+    if message.document.file_name.endswith(".txt"):
+        path = await message.download()
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+        links = extract_links_from_text(content)
+        save_links(links)
+        os.remove(path)
+        await message.reply(f"✅ Uploaded {len(links)} new link(s) from file.")
 
 @app.on_message(filters.command("stats") & filters.user(ADMIN_IDS))
 async def stats(client, message):
@@ -93,7 +122,7 @@ async def stats(client, message):
     assigned_count = users.aggregate([{"$unwind": "$links_assigned"}, {"$count": "total"}])
     assigned_count = list(assigned_count)
     assigned_count = assigned_count[0]["total"] if assigned_count else 0
-    await message.reply(f"📊 Users: {user_count}\n📁 Links in pool: {total_links}\n🔄 Total assigned: {assigned_count}")
+    await message.reply(f"📊 Stats:\n👥 Users: {user_count}\n📁 Links in pool: {total_links}\n🔄 Total assigned: {assigned_count}")
 
 @app.on_message(filters.command("mylinks"))
 async def my_links(client, message):
@@ -105,23 +134,6 @@ async def my_links(client, message):
     else:
         reply = "😶 You haven't received any links yet. Tap the button to get one."
     await message.reply(reply)
-
-@app.on_message(filters.text & filters.user(ADMIN_IDS))
-async def handle_text_links(client, message):
-    links = re.findall(r"https://terabox\.com/s/[^\s]+", message.text)
-    if links:
-        save_links(links)
-        await message.reply(f"✅ Added {len(links)} new link(s) from your message.")
-
-@app.on_message(filters.document & filters.user(ADMIN_IDS))
-async def handle_txt_upload(client, message):
-    if message.document.file_name.endswith(".txt"):
-        path = await message.download()
-        with open(path, "r") as f:
-            links = [line.strip() for line in f if line.strip().startswith("https://terabox.com/s/")]
-        save_links(links)
-        os.remove(path)
-        await message.reply(f"✅ Uploaded {len(links)} new link(s) from file.")
 
 @app.on_message(filters.command("export") & filters.user(ADMIN_IDS))
 async def export_assigned(client, message):

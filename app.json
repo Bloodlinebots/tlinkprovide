@@ -1,7 +1,7 @@
 {
   "name": "Hybrid TeraBox Bot",
   "description": "Telegram bot that provides unique TeraBox links using a hybrid storage system (MongoDB + .txt file) with no repetition.",
-  "repository": "https://github.com/your-username/hybrid-terabox-bot",
+  "repository": "https://github.com/Bloodlinebots/tlinkprovide",
   "logo": "https://i.imgur.com/8Pq0P4O.png",
   "keywords": ["telegram", "bot", "terabox", "pyrogram", "mongodb", "hybrid"],
   "env": {

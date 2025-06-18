@@ -30,6 +30,9 @@
       "url": "heroku/python"
     }
   ],
+  "scripts": {
+    "postdeploy": "echo '✅ Bot Deployed Successfully!'"
+  },
   "formation": {
     "worker": {
       "quantity": 1,

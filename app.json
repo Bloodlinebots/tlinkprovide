@@ -1,7 +1,7 @@
 {
   "name": "Terabox Link Share Bot",
   "description": "A Telegram bot that shares unique terabox.com links to users without repetition.",
-  "repository": "https://github.com/yourusername/your-repo",
+  "repository": "https://github.com/Bloodlinebots/tlinkprovide",
   "keywords": ["telegram", "bot", "terabox", "pyrogram", "mongodb"],
   "env": {
     "API_ID": {
